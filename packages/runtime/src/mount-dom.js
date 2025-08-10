@@ -2,7 +2,7 @@ import { DOM_TYPES } from './h'
 import { setAttributes } from './attributes'
 import { addEventListeners } from './events'
 
-export function mountDom(vdom, parentEl) {
+export function mountDOM(vdom, parentEl) {
     switch (vdom.type) {
         case DOM_TYPES.TEXT: {
             createTextNode(vdom, parentEl)
@@ -32,7 +32,7 @@ function createTextNode(vdom, parentEl) {
 function createFragmentNodes(vdom, parentEl) {
     const { children } = vdom
     vdom.el = parentEl
-    children.forEach((child) => mountDom(child, parentEl))
+    children.forEach((child) => mountDOM(child, parentEl))
 }
 
 function createElementNode(vdom, parentEl) {
@@ -41,7 +41,7 @@ function createElementNode(vdom, parentEl) {
     addProps(element, props, vdom)
     vdom.el = element
 
-    children.forEach((child) => mountDom(child, element))
+    children.forEach((child) => mountDOM(child, element))
     parentEl.append(element)
 }
 
