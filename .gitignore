@@ -4,5 +4,7 @@ node_modules/
 # Build output
 dist/
 
-# Mac-specific files
+# IDE & OS files
+.idea/
+.vscode/
 .DS_Store
