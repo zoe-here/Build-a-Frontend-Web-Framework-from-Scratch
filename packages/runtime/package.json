@@ -1,6 +1,6 @@
 {
   "name": "august-js-fwk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A frontend framework to teach web developers how frontend frameworks work.",
   "keywords": [
     "frontend",
@@ -10,9 +10,9 @@
     "web",
     "development"
   ],
-  "main": "dist/fe-fwk.js",
+  "main": "dist/august-js-fwk.js",
   "files": [
-    "dist/fe-fwk.js"
+    "dist/august-js-fwk.js"
   ],
   "scripts": {
     "build": "rollup -c",

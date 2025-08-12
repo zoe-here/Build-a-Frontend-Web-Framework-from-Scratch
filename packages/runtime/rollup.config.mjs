@@ -6,7 +6,7 @@ export default {
   plugins: [cleanup()],
   output: [
     {
-      file: 'dist/fe-fwk.js',
+      file: 'dist/august-js-fwk.js',
       format: 'esm',
       plugins: [filesize()],
     },
