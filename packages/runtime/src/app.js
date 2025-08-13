@@ -1,10 +1,12 @@
 import { destroyDOM } from './destroy-dom'
 import { Dispatcher } from './dispatcher'
 import { mountDOM } from './mount-dom'
+import { patchDOM } from './patch-dom'
 
 export function createApp({ state, view, reducers = {} }) {
     let parentEl = null
     let vdom = null
+    let isMounted = false
 
     const dispatcher = new Dispatcher()
     // Subscribe the renderApp() function to be an after-command handler
@@ -25,23 +27,27 @@ export function createApp({ state, view, reducers = {} }) {
     }
 
     function renderApp() {
-        // If a previous view exists, unmounts it
-        if (vdom) {
-            destroyDOM(vdom)
-        }
-        vdom = view(state, emit)
-        mountDOM(vdom, parentEl)
+        const newVdom = view(state, emit)
+        vdom = patchDOM(vdom, newVdom, parentEl)
     }
     return {
         mount (_parentEl) {
+            if (isMounted) {
+                throw new Error('The application is already mounted')
+            }
             parentEl = _parentEl
-            renderApp()
+            vdom = view(state, emit)
+            mountDOM(vdom, parentEl)
+
+            isMounted = true
         },
 
         unmount () {
             destroyDOM(vdom)
             vdom = null
             subscriptions.forEach((unsubscribe) => unsubscribe())
+
+            isMounted = false
         },
     }
 }
