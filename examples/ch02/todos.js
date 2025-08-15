@@ -1,4 +1,4 @@
-import { createApp, h, hFragment } from 'https://unpkg.com/august-js-fwk@1'
+import { createApp, h, hFragment } from 'https://unpkg.com/august-js-fwk@2'
 
 // Define the state
 const state = {
