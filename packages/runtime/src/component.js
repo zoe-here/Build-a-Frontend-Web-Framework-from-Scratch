@@ -2,10 +2,11 @@ import { destroyDOM } from './destroy-dom'
 import { DOM_TYPES } from './h'
 import { mountDOM, extractChildren} from './mount-dom'
 import { patchDOM } from './patch-dom'
+import { hasOwnProperty } from './utils/objects'
 
 // It takes an object containing a render() function and returns a component
 // It takes an object with a state() function to create the initial state
-export function defineComponent({ render, state }) {
+export function defineComponent({ render, state, ...methods }) {
     class Component {
         #isMounted = false
         #vdom = null
@@ -16,7 +17,6 @@ export function defineComponent({ render, state }) {
             // The state() function returns the initial state of the component based on the props
             this.state = state ? state(props) : {}
         }
-
         get elements() {
             // If the vdom is null, returns an empty array
             if (this.#vdom == null) {
@@ -59,7 +59,8 @@ export function defineComponent({ render, state }) {
             }
             // Call the render() method and saves the result in the #vdom private property
             this.#vdom = this.render()
-            mountDOM(this.#vdom, hostEl, index)
+            // Pass the component reference to the mountDOM() function by this
+            mountDOM(this.#vdom, hostEl, index, this)
             this.#hostEl = hostEl
             this.#isMounted = true
         }
@@ -86,6 +87,16 @@ export function defineComponent({ render, state }) {
             // Pass the component instance to the patchDOM() function using this
             this.#vdom = patchDOM(this.#vdom, vdom, this.#hostEl, this)
         }
+    }
+
+    for (const methodName in methods) {
+        if (hasOwnProperty(Component, methodName)) {
+            throw new Error(
+                `Method "${methodName}()" already exists in the component`
+            )
+        }
+        // Add the method to the prototype
+        Component.prototype[methodName] = methods[methodName]
     }
 
     return Component
