@@ -1,6 +1,7 @@
 import { DOM_TYPES } from './h'
 import { setAttributes } from './attributes'
 import { addEventListeners } from './events'
+import { extractPropsAndEvents } from './utils/props'
 
 export function mountDOM(
     vdom,
@@ -19,6 +20,10 @@ export function mountDOM(
         }
         case DOM_TYPES.FRAGMENT: {
             createFragmentNodes(vdom, parentEl, index, hostComponent)
+            break
+        }
+        case DOM_TYPES.COMPONENT: {
+            createComponentNode(vdom, parentEl, index, hostComponent)
             break
         }
         default: {
@@ -45,6 +50,16 @@ function createFragmentNodes(vdom, parentEl, index, hostComponent) {
             hostComponent
         )
     )
+}
+
+function createComponentNode(vdom, parentEl, index, hostComponent) {
+    const Component = vdom.tag
+    const { props, events } = extractPropsAndEvents(vdom)
+    const component = new Component(props, events, hostComponent)
+
+    component.mount(parentEl, index)
+    vdom.component = component
+    vdom.el = component.firstElement
 }
 
 function createElementNode(vdom, parentEl, index, hostComponent) {

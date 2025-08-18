@@ -16,6 +16,7 @@ import {
 } from './utils/arrays'
 import { objectsDiff } from './utils/objects'
 import { isNotBlankOrEmptyString } from './utils/strings'
+import { extractPropsAndEvents } from './utils/props'
 
 export function patchDOM(
     // Pass the host component instance to the patchDOM() function
@@ -37,6 +38,10 @@ export function patchDOM(
         }
         case DOM_TYPES.ELEMENT: {
             patchElement(oldVdom, newVdom, hostComponent)
+            break
+        }
+        case DOM_TYPES.COMPONENT: {
+            patchComponent(oldVdom, newVdom)
             break
         }
     }
@@ -159,6 +164,15 @@ function patchEvents(
         addedListeners[eventName] = listener
     }
     return addedListeners
+}
+
+function patchComponent(oldVdom, newVdom) {
+    const { component } = oldVdom
+    const { props } = extractPropsAndEvents(newVdom)
+    component.updateProps(props)
+
+    newVdom.component = component
+    newVdom.el = component.firstElement
 }
 
 function patchChildren(oldVdom, newVdom, hostComponent) {

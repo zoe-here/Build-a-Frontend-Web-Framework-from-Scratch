@@ -1,8 +1,10 @@
 import { destroyDOM } from './destroy-dom'
+import { Dispatcher } from './dispatcher'
 import { DOM_TYPES } from './h'
 import { mountDOM, extractChildren} from './mount-dom'
 import { patchDOM } from './patch-dom'
 import { hasOwnProperty } from './utils/objects'
+import equal from 'fast-deep-equal'
 
 // It takes an object containing a render() function and returns a component
 // It takes an object with a state() function to create the initial state
@@ -11,20 +13,59 @@ export function defineComponent({ render, state, ...methods }) {
         #isMounted = false
         #vdom = null
         #hostEl = null
+        #eventHandlers = null
+        #parentComponent = null
+        #dispatcher = new Dispatcher()
+        #subscriptions = []
 
-        constructor(props = {}) {
+        constructor(
+            props = {},
+            eventHandlers = {},
+            parentComponent = null,
+        ) {
             this.props = props
             // The state() function returns the initial state of the component based on the props
             this.state = state ? state(props) : {}
+            this.#eventHandlers = eventHandlers
+            this.#parentComponent = parentComponent
         }
+
+        #wireEventHandlers() {
+            this.#subscriptions = Object.entries(this.#eventHandlers).map(
+                ([eventName, handler]) =>
+                    this.#wireEventHandler(eventName, handler)
+            )
+        }
+
+        #wireEventHandler(eventName, handler) {
+            return this.#dispatcher.subscribe(eventName, (payload) => {
+                if (this.#parentComponent) {
+                    // If there is a parent component, binds the event handler’s context to it and calls it
+                    handler.call(this.#parentComponent, payload)
+                } else {
+                    handler(payload)
+                }
+            })
+        }
+
+        emit(eventName, payload) {
+            this.#dispatcher.dispatch(eventName, payload)
+        }
+
         get elements() {
             // If the vdom is null, returns an empty array
             if (this.#vdom == null) {
                 return []
             }
-            // If the vdom top node is a fragment, returns the elements inside the fragment
             if (this.#vdom.type === DOM_TYPES.FRAGMENT) {
-                return extractChildren(this.#vdom).map((child) => child.el)
+                return extractChildren(this.#vdom).flatMap((child) => {
+                    if (child.type === DOM_TYPES.COMPONENT) {
+                        // Call the elements getter recursively
+                        return child.component.elements
+                    }
+                    // Otherwise, returns the node’s element inside an array
+                    return [child.el]
+                })
             }
             // If the vdom top node is a single node, returns its element
             return [this.#vdom.el]
@@ -41,6 +82,15 @@ export function defineComponent({ render, state, ...methods }) {
             }
             // When the component’s view isn’t a fragment, the offset is 0
             return 0
+        }
+
+        updateProps(props) {
+            const newProps = { ...this.props, ...props }
+            if (equal(this.props, newProps)) {
+                return
+            }
+            this.props = newProps
+            this.#patch()
         }
 
         updateState(state) {
@@ -61,6 +111,7 @@ export function defineComponent({ render, state, ...methods }) {
             this.#vdom = this.render()
             // Pass the component reference to the mountDOM() function by this
             mountDOM(this.#vdom, hostEl, index, this)
+            this.#wireEventHandlers()
             this.#hostEl = hostEl
             this.#isMounted = true
         }
@@ -71,9 +122,11 @@ export function defineComponent({ render, state, ...methods }) {
                 throw new Error('Component is not mounted')
             }
             destroyDOM(this.#vdom)
+            this.#subscriptions.forEach((unsubscribe) => unsubscribe())
             this.#vdom = null
-            this.#hostEl = null
             this.#isMounted = false
+            this.#hostEl = null
+            this.#subscriptions = []
         }
 
         #patch() {
