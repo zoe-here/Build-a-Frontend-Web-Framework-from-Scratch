@@ -1,34 +1,17 @@
 import { destroyDOM } from './destroy-dom'
-import { Dispatcher } from './dispatcher'
 import { mountDOM } from './mount-dom'
-import { patchDOM } from './patch-dom'
+import { h } from './h'
 
-export function createApp({ state, view, reducers = {} }) {
+export function createApp(RootComponent, props = {}) {
     let parentEl = null
     let vdom = null
     let isMounted = false
 
-    const dispatcher = new Dispatcher()
-    // Subscribe the renderApp() function to be an after-command handler
-    // so the application is re-rendered after every command is handled
-    const subscriptions = [dispatcher.afterEveyCommand(renderApp)]
-
-    function emit(eventName, payload) {
-        dispatcher.dispatch(eventName, payload)
-    }
-
-    for (const actionName in reducers) {
-        const reducer = reducers[actionName]
-
-        const subs = dispatcher.subscribe(actionName, (payload) => {
-            state = reducer(state, payload)
-        })
-        subscriptions.push(subs)
-    }
-
-    function renderApp() {
-        const newVdom = view(state, emit)
-        vdom = patchDOM(vdom, newVdom, parentEl)
+    // To reset the internal properties of the application
+    function reset() {
+        parentEl = null
+        isMounted = false
+        vdom = null
     }
     return {
         mount (_parentEl) {
@@ -36,18 +19,18 @@ export function createApp({ state, view, reducers = {} }) {
                 throw new Error('The application is already mounted')
             }
             parentEl = _parentEl
-            vdom = view(state, emit)
+            vdom = h(RootComponent, props)
             mountDOM(vdom, parentEl)
 
             isMounted = true
         },
 
         unmount () {
+            if (!isMounted) {
+                throw new Error('The application is not mounted')
+            }
             destroyDOM(vdom)
-            vdom = null
-            subscriptions.forEach((unsubscribe) => unsubscribe())
-
-            isMounted = false
+            reset()
         },
     }
 }
