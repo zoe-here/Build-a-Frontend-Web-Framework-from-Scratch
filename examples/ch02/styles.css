@@ -16,17 +16,15 @@ h1 {
   font-size: 3.5rem;
 }
 
-button,
-input {
-    font-family: inherit;
-    padding: 0.25em 0.5em;
-    font-size: 1rem;
+li {
+    margin: 0.5em 0;
 }
 
-button:disabled {
-  transform: color 0.5s ease-out;
+li > span {
+    cursor: pointer;
+    margin-inline-end: 0.5em;
 }
 
-button:enabled {
-  transition: color 0.5s ease-out;
+li > input {
+    margin-inline-end: 0.5em;
 }
