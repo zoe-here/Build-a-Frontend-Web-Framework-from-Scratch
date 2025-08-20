@@ -6,9 +6,16 @@ import { patchDOM } from './patch-dom'
 import { hasOwnProperty } from './utils/objects'
 import equal from 'fast-deep-equal'
 
+const emptyFn = () => {}
 // It takes an object containing a render() function and returns a component
 // It takes an object with a state() function to create the initial state
-export function defineComponent({ render, state, ...methods }) {
+export function defineComponent({
+    render,
+    state,
+    onMounted = emptyFn,
+    onUnmounted = emptyFn,
+    ...methods
+}) {
     class Component {
         #isMounted = false
         #vdom = null
@@ -28,6 +35,14 @@ export function defineComponent({ render, state, ...methods }) {
             this.state = state ? state(props) : {}
             this.#eventHandlers = eventHandlers
             this.#parentComponent = parentComponent
+        }
+
+        onMounted() {
+            return Promise.resolve(onMounted.call(this))
+        }
+
+        onUnmounted() {
+            return Promise.resolve(onUnmounted.call(this))
         }
 
         #wireEventHandlers() {
