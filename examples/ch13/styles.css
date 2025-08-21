@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap');
+
+body {
+  font-family: 'Roboto', sans-serif;
+  width: 500px;
+  margin: 2em auto;
+}
+
+label {
+  display: block;
+  font-style: italic;
+  margin-bottom: 0.25em;
+}
+
+h1 {
+  font-size: 3.5rem;
+}
+
+li {
+    margin: 0.5em 0;
+}
+
+li > span {
+    cursor: pointer;
+    margin-inline-end: 0.5em;
+}
+
+li > input {
+    margin-inline-end: 0.5em;
+}
