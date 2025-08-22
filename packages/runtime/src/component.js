@@ -1,10 +1,11 @@
 import { destroyDOM } from './destroy-dom'
 import { Dispatcher } from './dispatcher'
-import { DOM_TYPES } from './h'
+import { DOM_TYPES, didCreateSlot, resetDidCreateSlot } from './h'
 import { mountDOM, extractChildren} from './mount-dom'
 import { patchDOM } from './patch-dom'
 import { hasOwnProperty } from './utils/objects'
 import equal from 'fast-deep-equal'
+import { fillSlots } from './slots'
 
 const emptyFn = () => {}
 // It takes an object containing a render() function and returns a component
@@ -24,6 +25,12 @@ export function defineComponent({
         #parentComponent = null
         #dispatcher = new Dispatcher()
         #subscriptions = []
+
+        #children = []
+
+        setExternalContent(children) {
+            this.#children = children
+        }
 
         constructor(
             props = {},
@@ -114,7 +121,13 @@ export function defineComponent({
         }
 
         render() {
-            return render.call(this)
+            const vdom = render.call(this)
+            // Filling the slots only when the hSlot() function was called
+            if (didCreateSlot()) {
+                fillSlots(vdom, this.#children)
+                resetDidCreateSlot()
+            }
+            return vdom
         }
 
         mount(hostEl, index = null) {
