@@ -1,11 +1,16 @@
 import { destroyDOM } from './destroy-dom'
 import { mountDOM } from './mount-dom'
 import { h } from './h'
+import { NoopRouter } from './router'
 
-export function createApp(RootComponent, props = {}) {
+export function createApp(RootComponent, props = {}, options = {}) {
     let parentEl = null
     let vdom = null
     let isMounted = false
+
+    const context = {
+        router: options.router || new NoopRouter(),
+    }
 
     // To reset the internal properties of the application
     function reset() {
@@ -20,7 +25,9 @@ export function createApp(RootComponent, props = {}) {
             }
             parentEl = _parentEl
             vdom = h(RootComponent, props)
-            mountDOM(vdom, parentEl)
+            mountDOM(vdom, parentEl, null, { appContext: context })
+
+            context.router.init()
 
             isMounted = true
         },
@@ -30,6 +37,7 @@ export function createApp(RootComponent, props = {}) {
                 throw new Error('The application is not mounted')
             }
             destroyDOM(vdom)
+            context.router.destroy()
             reset()
         },
     }

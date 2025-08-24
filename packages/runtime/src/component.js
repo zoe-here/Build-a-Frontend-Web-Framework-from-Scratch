@@ -25,6 +25,7 @@ export function defineComponent({
         #parentComponent = null
         #dispatcher = new Dispatcher()
         #subscriptions = []
+        #appContext = null
 
         #children = []
 
@@ -50,6 +51,14 @@ export function defineComponent({
 
         onUnmounted() {
             return Promise.resolve(onUnmounted.call(this))
+        }
+
+        setAppContext(appContext) {
+            this.#appContext = appContext
+        }
+
+        get appContext() {
+            return this.#appContext
         }
 
         #wireEventHandlers() {
